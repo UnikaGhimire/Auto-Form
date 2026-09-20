@@ -1,0 +1,36 @@
+text,label
+full name,personal.name
+your name,personal.name
+applicant name,personal.name
+email,personal.email
+email address,personal.email
+e-mail,personal.email
+phone number,personal.phone
+mobile number,personal.phone
+telephone,personal.phone
+city,personal.location
+current location,personal.location
+date of birth,personal.date_of_birth
+linkedin profile,personal.linkedin
+github url,personal.github
+portfolio website,personal.portfolio
+university,education.institution
+college name,education.institution
+higher education institution,education.institution
+degree,education.degree
+academic qualification,education.degree
+major subject,education.field
+field of study,education.field
+company name,experience.company
+current employer,experience.company
+organization,experience.company
+job title,experience.position
+current position,experience.position
+role title,experience.position
+technical skills,skills
+skills and technologies,skills
+project name,projects.name
+project description,projects.description
+project technologies,projects.technologies
+project role,projects.role
+project url,projects.url
