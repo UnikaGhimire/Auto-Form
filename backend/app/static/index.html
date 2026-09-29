@@ -1,13 +1,199 @@
 <!doctype html>
-<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Automatic Form Filler</title><link rel="stylesheet" href="/ui/ui.css"></head>
-<body><aside><div class="brand"><span>✦</span><div>Automatic<br><b>Form Filler</b></div></div><nav><a class="active" href="#personal">Personal</a><a href="#education">Education</a><a href="#experience">Experience</a><a href="#skills">Skills</a><a href="#projects">Projects</a><a href="#cv">CV</a><a href="#answers">Previous answers</a><a href="#settings">Settings</a></nav><p class="local">● Everything stays local</p></aside>
-<main><header><div><p class="eyebrow">LOCAL PROFILE</p><h1>Your application details</h1><p class="sub">Information saved here is used only after you review it in the extension.</p></div><span id="backend" class="badge">Checking backend…</span></header>
-<section id="personal" class="card"><div class="section-title"><div><h2>Personal information</h2><p>Core details used in applications.</p></div></div><form id="profile-form" class="grid personal-grid"><label>Full name<input name="full_name" autocomplete="name"></label><label>Email<input type="email" name="email" autocomplete="email"></label><label>Phone<input name="phone" autocomplete="tel"></label><label>Location<input name="location" autocomplete="address-level2"></label><label>Date of birth<input type="date" name="date_of_birth"></label><label>LinkedIn<input name="linkedin" placeholder="https://linkedin.com/in/…"></label><label>GitHub<input name="github" placeholder="https://github.com/…"></label><label>Portfolio<input name="portfolio" placeholder="https://…"></label><div class="actions"><button>Save personal details</button></div></form></section>
-<section id="education" class="card"><div class="section-title"><div><h2>Education</h2><p>Add each qualification separately.</p></div></div><form class="record-form grid" data-resource="education"><input type="hidden" name="id"><label>Institution<input name="institution" required></label><label>Degree<input name="degree"></label><label>Field of study<input name="field"></label><label>Start date<input name="start_date" placeholder="2022"></label><label>End date<input name="end_date" placeholder="2026"></label><label>Grade<input name="grade"></label><label class="wide">Description<textarea name="description"></textarea></label><div class="actions"><button>Save education</button><button type="button" class="secondary cancel">Clear</button></div></form><div class="records" id="education-records"></div></section>
-<section id="experience" class="card"><div class="section-title"><div><h2>Experience</h2><p>Include relevant roles and internships.</p></div></div><form class="record-form grid" data-resource="experience"><input type="hidden" name="id"><label>Company<input name="company" required></label><label>Position<input name="position"></label><label>Start date<input name="start_date"></label><label>End date<input name="end_date"></label><label class="wide">Description<textarea name="description"></textarea></label><div class="actions"><button>Save experience</button><button type="button" class="secondary cancel">Clear</button></div></form><div class="records" id="experience-records"></div></section>
-<section id="skills" class="card"><div class="section-title"><div><h2>Skills</h2><p>One skill per entry.</p></div></div><form class="inline-form" data-resource="skills"><input name="name" required placeholder="e.g. Python"><button>Add skill</button></form><div class="chips" id="skills-records"></div></section>
-<section id="projects" class="card"><div class="section-title"><div><h2>Projects</h2><p>Projects provide useful context for longer answers.</p></div></div><form class="record-form grid" data-resource="projects"><input type="hidden" name="id"><label>Name<input name="name" required></label><label>Role<input name="role"></label><label>Technologies<input name="technologies" placeholder="Python, FastAPI"></label><label>URL<input name="url"></label><label class="wide">Description<textarea name="description"></textarea></label><div class="actions"><button>Save project</button><button type="button" class="secondary cancel">Clear</button></div></form><div class="records" id="projects-records"></div></section>
-<section id="cv" class="card"><div class="section-title"><div><h2>CV</h2><p>PDF or DOCX, processed only on this computer (10 MB maximum).</p></div></div><form id="cv-form" class="upload"><input type="file" name="file" accept=".pdf,.docx" required><button>Upload and preview</button></form><div id="cv-result" class="preview" hidden><h3>Review extracted text</h3><p>This preview is not saved as profile data automatically. Check it, then add or correct details above.</p><pre></pre></div></section>
-<section id="answers" class="card"><div class="section-title"><div><h2>Previous approved answers</h2><p>Saved locally as reference for future, reviewed AI answers.</p></div></div><form class="record-form grid" data-resource="answers"><input type="hidden" name="id"><label class="wide">Question<textarea name="question" required></textarea></label><label class="wide">Approved answer<textarea name="answer" required></textarea></label><div class="actions"><button>Save answer</button><button type="button" class="secondary cancel">Clear</button></div></form><div class="records" id="answers-records"></div></section>
-<section id="settings" class="card danger"><h2>Local data</h2><p>Delete your profile, CV files, previous answers, and all records from this computer.</p><button id="delete-all" class="danger-button">Delete all local data</button></section>
-</main><div id="toast" role="status"></div><script src="/ui/ui.js"></script></body></html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Form Filler</title>
+  <link rel="stylesheet" href="/ui/ui.css?v=4">
+  <link rel="stylesheet" href="/ui/dashboard-polish.css?v=4">
+</head>
+<body>
+  <aside>
+    <div class="brand">
+      <span></span>
+      <div><b>Form Filler</b></div>
+    </div>
+    <nav>
+      <a class="active" href="#personal">Personal</a>
+      <a href="#education">Education</a>
+      <a href="#experience">Experience</a>
+      <a href="#skills">Skills</a>
+      <a href="#projects">Projects</a>
+      <a href="#cv">CV</a>
+      <a href="#answers">Previous answers</a>
+      <a href="#settings">Settings</a>
+    </nav>
+    <p class="local">Stored on this computer only</p>
+  </aside>
+
+  <main>
+    <header>
+      <div>
+        <p class="eyebrow">Profile</p>
+        <h1>Application details</h1>
+        <p class="sub">Used by the extension after you review each match. Forms are never submitted for you.</p>
+      </div>
+      <span id="backend" class="badge">Checking backend…</span>
+    </header>
+
+    <section id="personal" class="card">
+      <div class="section-title">
+        <div>
+          <h2>Personal information</h2>
+          <p>Core identity and eligibility details used across applications.</p>
+        </div>
+      </div>
+      <form id="profile-form" class="grid personal-grid">
+        <div class="field-block span-all">
+          <h3>Identity</h3>
+          <div class="grid">
+            <label>Full name<input name="full_name" autocomplete="name"></label>
+            <label>Email<input type="email" name="email" autocomplete="email"></label>
+            <label>Phone<input name="phone" autocomplete="tel"></label>
+            <label>Location<input name="location" autocomplete="address-level2"></label>
+            <label>Address<input name="address" autocomplete="street-address"></label>
+            <label>Date of birth<input type="date" name="date_of_birth"></label>
+          </div>
+        </div>
+
+        <div class="field-block span-all">
+          <h3>Links</h3>
+          <div class="grid">
+            <label>LinkedIn<input name="linkedin" placeholder="https://linkedin.com/in/…"></label>
+            <label>GitHub<input name="github" placeholder="https://github.com/…"></label>
+            <label class="wide">Portfolio<input name="portfolio" placeholder="https://…"></label>
+          </div>
+        </div>
+
+        <div class="field-block span-all">
+          <h3>Work &amp; eligibility</h3>
+          <div class="grid">
+            <label>Current job title<input name="headline" placeholder="Data Analyst"></label>
+            <label>Current company<input name="current_company"></label>
+            <label>Graduation year<input name="graduation_year" placeholder="2024"></label>
+            <label>Languages<input name="languages" placeholder="English, Nepali"></label>
+            <label>Work authorisation<input name="work_authorization" placeholder="Yes — no sponsorship required"></label>
+            <label>Visa status<input name="visa_status" placeholder="Not applicable"></label>
+            <label>Availability<input name="availability" placeholder="Immediately / 1 month notice"></label>
+            <label>Notice period<input name="notice_period" placeholder="1 month"></label>
+            <label class="wide">Expected salary<input name="salary_expectation" placeholder="Negotiable"></label>
+          </div>
+        </div>
+
+        <div class="field-block span-all">
+          <h3>Extra profile</h3>
+          <div class="grid">
+            <label>References<input name="references" placeholder="Dr A. Sharma, former supervisor"></label>
+            <label>Certifications<input name="certifications"></label>
+            <label>Awards<input name="awards"></label>
+            <label>Interests and hobbies<input name="interests"></label>
+            <label class="wide">Professional summary<textarea name="summary" placeholder="One or two sentences describing your background and focus."></textarea></label>
+          </div>
+        </div>
+
+        <div class="actions"><button type="submit">Save personal details</button></div>
+      </form>
+    </section>
+
+    <section id="education" class="card">
+      <div class="section-title"><div><h2>Education</h2><p>Add each qualification separately.</p></div></div>
+      <form class="record-form grid" data-resource="education">
+        <input type="hidden" name="id">
+        <label>Institution<input name="institution" required></label>
+        <label>Degree<input name="degree"></label>
+        <label>Field of study<input name="field"></label>
+        <label>Start date<input name="start_date" placeholder="2022"></label>
+        <label>End date<input name="end_date" placeholder="2026"></label>
+        <label>Grade<input name="grade"></label>
+        <label class="wide">Description<textarea name="description"></textarea></label>
+        <div class="actions"><button type="submit">Save education</button><button type="button" class="secondary cancel">Clear</button></div>
+      </form>
+      <div class="records" id="education-records"></div>
+    </section>
+
+    <section id="experience" class="card">
+      <div class="section-title"><div><h2>Experience</h2><p>Include relevant roles and internships.</p></div></div>
+      <form class="record-form grid" data-resource="experience">
+        <input type="hidden" name="id">
+        <label>Company<input name="company" required></label>
+        <label>Position<input name="position"></label>
+        <label>Start date<input name="start_date"></label>
+        <label>End date<input name="end_date"></label>
+        <label class="wide">Description<textarea name="description"></textarea></label>
+        <div class="actions"><button type="submit">Save experience</button><button type="button" class="secondary cancel">Clear</button></div>
+      </form>
+      <div class="records" id="experience-records"></div>
+    </section>
+
+    <section id="skills" class="card">
+      <div class="section-title"><div><h2>Skills</h2><p>One skill per entry.</p></div></div>
+      <form class="inline-form" data-resource="skills">
+        <input name="name" required placeholder="e.g. Python">
+        <button type="submit">Add skill</button>
+      </form>
+      <div class="chips" id="skills-records"></div>
+    </section>
+
+    <section id="projects" class="card">
+      <div class="section-title"><div><h2>Projects</h2><p>Projects provide useful context for longer answers.</p></div></div>
+      <form class="record-form grid" data-resource="projects">
+        <input type="hidden" name="id">
+        <label>Name<input name="name" required></label>
+        <label>Role<input name="role"></label>
+        <label>Technologies<input name="technologies" placeholder="Python, FastAPI"></label>
+        <label>URL<input name="url"></label>
+        <label class="wide">Description<textarea name="description"></textarea></label>
+        <div class="actions"><button type="submit">Save project</button><button type="button" class="secondary cancel">Clear</button></div>
+      </form>
+      <div class="records" id="projects-records"></div>
+    </section>
+
+    <section id="cv" class="card">
+      <div class="section-title"><div><h2>CV</h2><p>PDF or DOCX, processed only on this computer (10 MB maximum).</p></div></div>
+      <p id="cv-status" class="cv-status" role="status">Loading saved CV…</p>
+      <form id="cv-form" class="upload">
+        <input type="file" name="file" accept=".pdf,.docx" required>
+        <button type="submit">Upload and preview</button>
+      </form>
+      <div id="cv-result" class="preview" hidden>
+        <h3>Review extracted text <span id="cv-filename"></span></h3>
+        <p id="cv-context">Saved locally and available as context for reviewed answer generation. Profile fields are never changed automatically.</p>
+        <div id="cv-sections" class="cv-sections"></div>
+        <details><summary>Full extracted text</summary><pre></pre></details>
+      </div>
+    </section>
+
+    <section id="answers" class="card">
+      <div class="section-title"><div><h2>Previous approved answers</h2><p>Saved locally as reference for future, reviewed AI answers.</p></div></div>
+      <form class="record-form grid" data-resource="answers">
+        <input type="hidden" name="id">
+        <label class="wide">Question<textarea name="question" required></textarea></label>
+        <label class="wide">Approved answer<textarea name="answer" required></textarea></label>
+        <div class="actions"><button type="submit">Save answer</button><button type="button" class="secondary cancel">Clear</button></div>
+      </form>
+      <div class="records" id="answers-records"></div>
+    </section>
+
+    <section id="settings" class="card danger">
+      <div class="settings-panel">
+        <p class="settings-kicker">Settings</p>
+        <h2>Delete local data</h2>
+        <p class="settings-copy">This permanently removes everything stored by Automatic Form Filler on this computer. You will need to re-enter your profile before scanning forms again.</p>
+        <ul class="settings-list">
+          <li>Personal profile details</li>
+          <li>Education, experience, skills, and projects</li>
+          <li>Uploaded CV files and extracted text</li>
+          <li>Previously approved written answers</li>
+        </ul>
+        <div class="settings-actions">
+          <button id="delete-all" class="danger-button" type="button">Delete all local data</button>
+          <p class="settings-note">This cannot be undone.</p>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <div id="toast" role="status"></div>
+  <script src="/ui/ui.js"></script>
+</body>
+</html>

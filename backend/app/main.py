@@ -1,28 +1,29 @@
-import shutil, uuid
+import uuid
+from datetime import datetime
 from pathlib import Path
-import fitz
-from docx import Document
 from fastapi import FastAPI, Depends, HTTPException, UploadFile, File
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.orm import Session
 from sqlalchemy import select
-from .database import Base, engine, get_db
-from .models import Profile, Education, Experience, Skill, Project, PreviousAnswer
+from .database import Base, engine, get_db, SessionLocal, add_missing_columns
+from .models import Profile, Education, Experience, Skill, Project, PreviousAnswer, CVDocument
 from .schemas import *
 from .config import settings
-from .services import classifier, get_value, field_text, OPEN_ENDED, context_for, generate_local, validate_answer
+from .services import classifier, get_value, resolve_value, field_text, detect_open_ended, context_for, generate_local, validate_answer, relevance_score, first_person_ratio, extract_cv_text, cv_sections, question_guidance, probe_model
 
 app=FastAPI(title='Automatic Form Filler',version='1.0.0')
 app.mount('/ui', StaticFiles(directory=Path(__file__).parent/'static'), name='ui')
 app.add_middleware(CORSMiddleware,allow_origin_regex=r'chrome-extension://.*',allow_methods=['GET','POST','PUT','DELETE'],allow_headers=['*'])
 @app.on_event('startup')
-def init(): Base.metadata.create_all(engine)
+def init():
+    Base.metadata.create_all(engine)
+    add_missing_columns()
 @app.get('/', include_in_schema=False)
 def dashboard(): return FileResponse(Path(__file__).parent/'static'/'index.html')
 @app.get('/health')
-def health(): return {'status':'ok','model_loaded':classifier.model is not None,'ollama_url':settings.ollama_base_url}
+def health(): return {'status':'ok','model_loaded':classifier.model is not None,'ollama_url':settings.ollama_base_url,'answer_model':probe_model(),'configured_model':settings.ollama_model}
 def one(model, db):
     row=db.get(model,1)
     if not row: row=model(id=1); db.add(row); db.commit(); db.refresh(row)
@@ -72,41 +73,74 @@ def delete_skill(item_id:int,db:Session=Depends(get_db)):
 def classify(payload:ClassifyRequest,db:Session=Depends(get_db)):
     result=[]
     for f in payload.fields:
-        if OPEN_ENDED.search(field_text(f)):
-            result.append({'id':f.id,'mapped_field':None,'confidence':0,'value':'','kind':'open_ended'});continue
-        mapped,confidence,source=classifier.predict(f); value=get_value(db,mapped) if mapped and confidence>=settings.suggest_threshold else ''
-        result.append({'id':f.id,'mapped_field':mapped if confidence>=settings.suggest_threshold else None,'confidence':confidence,'value':value,'kind':'simple','source':source,'requires_review':confidence<settings.auto_fill_threshold})
+        open_ended,question=detect_open_ended(f)
+        if open_ended:
+            result.append({'id':f.id,'mapped_field':None,'confidence':0.0,'value':'','option_value':None,'kind':'open_ended','question':question or f.label or f.placeholder or f.nearby_text,'requires_review':True});continue
+        mapped,confidence,source=classifier.predict(f)
+        if mapped and confidence>=settings.suggest_threshold:
+            value,option_value=resolve_value(db,mapped,f.options,f.option_values)
+        else:
+            value,option_value='',None
+        result.append({'id':f.id,'mapped_field':mapped if confidence>=settings.suggest_threshold else None,'confidence':confidence,'value':value,'option_value':option_value,'kind':'simple','source':source,'requires_review':confidence<settings.auto_fill_threshold,'detected_label':f.label or f.name or f.id_attribute})
     return {'fields':result}
 @app.post('/context')
 def context(payload:GenerateRequest,db:Session=Depends(get_db)):
-    value,sources=context_for(db,payload.question);return {'context':value,'sources':sources}
+    value,sources,kind,missing=context_for(db,payload.question);return {'context':value,'sources':sources,'question_kind':kind,'missing':missing}
 @app.post('/answers/generate')
 async def generate(payload:GenerateRequest,db:Session=Depends(get_db)):
-    context,sources=context_for(db,payload.question)
-    if not context: raise HTTPException(422,'Add profile information before generating an answer.')
-    try: answer=await generate_local(payload.question,context)
+    context,sources,kind,missing=context_for(db,payload.question)
+    if not context.strip(): raise HTTPException(422,'Add profile information before generating an answer.')
+    _,guidance,_=question_guidance(payload.question)
+    try: answer=await generate_local(payload.question,context,payload.length,guidance,missing)
     except RuntimeError as e: raise HTTPException(503,str(e))
-    valid,message=validate_answer(answer,context)
-    return {'answer':answer,'confidence':.75 if valid else .25,'sources':sources,'valid':valid,'validation_message':message}
+    valid,message=validate_answer(answer,context,payload.question)
+    relevance=round(min(1.0,relevance_score(answer,payload.question)/2.0),3)
+    grounding=1.0 if valid else 0.0
+    voice=round(min(1.0,first_person_ratio(answer)*12),3)
+    confidence=round(0.2+0.35*relevance+0.3*grounding+0.15*voice,3)
+    return {'answer':answer,'confidence':confidence,'relevance':relevance,'first_person':voice>=0.5,'sources':sources,'missing':missing,'question_kind':kind,'valid':valid,'validation_message':message}
 @app.post('/answers/validate')
 def validate(payload:AnswerIn,db:Session=Depends(get_db)):
-    context,_=context_for(db,payload.question); valid,message=validate_answer(payload.answer,context);return {'valid':valid,'message':message}
+    context,_,_,_=context_for(db,payload.question); valid,message=validate_answer(payload.answer,context,payload.question);return {'valid':valid,'message':message}
+@app.post('/answers/save')
+def save_answer(payload:SaveAnswerRequest,db:Session=Depends(get_db)):
+    existing=db.scalar(select(PreviousAnswer).where(PreviousAnswer.question==payload.question))
+    if existing:
+        existing.answer=payload.answer; existing.updated_at=datetime.utcnow()
+    else:
+        db.add(PreviousAnswer(question=payload.question,answer=payload.answer))
+    db.commit()
+    return {'saved':True}
 @app.post('/cv/upload')
-async def upload_cv(file:UploadFile=File(...)):
+async def upload_cv(file:UploadFile=File(...),db:Session=Depends(get_db)):
     suffix=Path(file.filename or '').suffix.lower()
     if suffix not in {'.pdf','.docx'}: raise HTTPException(415,'Only PDF and DOCX files are supported.')
     content=await file.read()
     if len(content)>settings.max_cv_bytes: raise HTTPException(413,'CV exceeds the 10 MB limit.')
-    dest=settings.upload_dir/f'{uuid.uuid4()}{suffix}';dest.write_bytes(content)
     try:
-        text=''.join(p.get_text() for p in fitz.open(stream=content,filetype='pdf')) if suffix=='.pdf' else '\n'.join(p.text for p in Document(dest).paragraphs)
+        text,sections=extract_cv_text(content,suffix)
+        if not text: raise ValueError('The CV contains no readable text.')
+    except Exception as e:
+        raise HTTPException(422,'The CV could not be read. Check that it is a text-based PDF or a valid DOCX file.') from e
+    dest=settings.upload_dir/f'{uuid.uuid4()}{suffix}'
+    try:
+        dest.write_bytes(content)
+        db.query(CVDocument).delete()
+        db.add(CVDocument(filename=file.filename or 'cv',extracted_text=text[:100000]))
+        db.commit()
     except Exception:
-        dest.unlink(missing_ok=True);raise HTTPException(422,'The CV could not be read.')
-    return {'filename':file.filename,'text':text[:100000],'sections':{x:[] for x in ['education','experience','skills','projects']},'review_required':True}
+        db.rollback(); dest.unlink(missing_ok=True); raise
+    return {'available':True,'filename':file.filename or 'cv','text':text[:100000],'sections':sections,'review_required':True,'saved_for_answer_context':True}
+
+@app.get('/cv')
+def latest_cv(db:Session=Depends(get_db)):
+    cv=db.scalars(select(CVDocument).order_by(CVDocument.created_at.desc())).first()
+    if not cv: return {'available':False}
+    return {'available':True,'filename':cv.filename,'text':cv.extracted_text,'sections':cv_sections(cv.extracted_text),'saved_for_answer_context':True}
 @app.post('/settings/delete-all-data')
 def delete_all_data(payload:ConfirmDelete,db:Session=Depends(get_db)):
     if not payload.confirm: raise HTTPException(422,'Set confirm to true to delete all local data.')
-    for model in (Education,Experience,Skill,Project,PreviousAnswer,Profile): db.query(model).delete()
+    for model in (Education,Experience,Skill,Project,PreviousAnswer,CVDocument,Profile): db.query(model).delete()
     db.commit()
     for path in settings.upload_dir.iterdir():
         if path.is_file(): path.unlink()

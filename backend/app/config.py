@@ -10,7 +10,9 @@ class Settings(BaseSettings):
     upload_dir: Path = BASE_DIR / 'data' / 'uploads' / 'cv'
     model_dir: Path = BASE_DIR / 'models'
     ollama_base_url: str = 'http://127.0.0.1:11434'
-    ollama_model: str = 'llama3.2:3b'
+    ollama_model: str = 'qwen3:4b'
+    ollama_fallback_models: str = 'llama3.1:8b,llama3:8b,llama3:latest,qwen2.5:7b,mistral:7b,mistral:latest,gemma2:9b,llama3.2:3b,qwen3:8b,qwen3:4b,qwen3:1.7b,phi3:medium'
+    answer_context_chars: int = Field(default=6000, ge=1000, le=20000)
     auto_fill_threshold: float = Field(default=0.90, ge=0, le=1)
     suggest_threshold: float = Field(default=0.60, ge=0, le=1)
     max_cv_bytes: int = 10 * 1024 * 1024

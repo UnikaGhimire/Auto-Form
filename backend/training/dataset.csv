@@ -2,35 +2,145 @@ text,label
 full name,personal.name
 your name,personal.name
 applicant name,personal.name
+candidate name,personal.name
+legal name,personal.name
+name,personal.name
+first name,personal.first_name
+given name,personal.first_name
+forename,personal.first_name
+last name,personal.last_name
+family name,personal.last_name
+surname,personal.last_name
 email,personal.email
 email address,personal.email
 e-mail,personal.email
+contact email,personal.email
+work email,personal.email
 phone number,personal.phone
 mobile number,personal.phone
 telephone,personal.phone
+contact number,personal.phone
+cell phone,personal.phone
 city,personal.location
 current location,personal.location
+country,personal.location
+state province,personal.location
+home address,personal.address
+street address,personal.address
+address line one,personal.address
+postal address,personal.address
 date of birth,personal.date_of_birth
+dob,personal.date_of_birth
+birthday,personal.date_of_birth
 linkedin profile,personal.linkedin
+linkedin url,personal.linkedin
 github url,personal.github
+github username,personal.github
 portfolio website,personal.portfolio
+personal website,personal.portfolio
+behance profile,personal.portfolio
+current job title,personal.headline
+desired job title,personal.headline
+professional title,personal.headline
+professional summary,personal.summary
+career summary,personal.summary
+about me,personal.summary
+short bio,personal.summary
+spoken languages,personal.languages
+languages,personal.languages
+current company,personal.current_company
+current employer,personal.current_company
+graduation year,personal.graduation_year
+work authorization,personal.work_authorization
+authorized to work,personal.work_authorization
+eligible to work,personal.work_authorization
+right to work,personal.work_authorization
+visa status,personal.visa_status
+work permit,personal.visa_status
+requires visa sponsorship,personal.visa_status
+availability,personal.availability
+available to start,personal.availability
+when can you start,personal.availability
+date you can start,personal.availability
+notice period,personal.notice_period
+expected salary,personal.salary_expectation
+desired salary,personal.salary_expectation
+salary expectation,personal.salary_expectation
+current salary,personal.salary_expectation
+references,personal.references
+referee,personal.references
+certifications,personal.certifications
+licenses,personal.certifications
+accreditations,personal.certifications
+awards,personal.awards
+honours,personal.awards
+achievements,personal.awards
+hobbies and interests,personal.interests
 university,education.institution
 college name,education.institution
+school name,education.institution
+institution name,education.institution
 higher education institution,education.institution
+alma mater,education.institution
 degree,education.degree
 academic qualification,education.degree
+highest qualification,education.degree
+bachelor degree,education.degree
+masters degree,education.degree
 major subject,education.field
 field of study,education.field
+specialization,education.field
+discipline,education.field
+gpa,education.grade
+cgpa,education.grade
+grade,education.grade
+graduation date,education.end_date
+year of graduation,education.end_date
 company name,experience.company
 current employer,experience.company
 organization,experience.company
+organisation name,experience.company
+employer,experience.company
+workplace,experience.company
+firm name,experience.company
 job title,experience.position
 current position,experience.position
 role title,experience.position
-technical skills,skills
-skills and technologies,skills
+designation,experience.position
+job description,experience.description
+role description,experience.description
+responsibilities,experience.description
+duties,experience.description
+start date,experience.start_date
+joining date,experience.start_date
+end date,experience.end_date
+leaving date,experience.end_date
 project name,projects.name
 project description,projects.description
+project summary,projects.description
 project technologies,projects.technologies
+technologies used,projects.technologies
+tools used,projects.technologies
+built with,projects.technologies
 project role,projects.role
+role in the project,projects.role
+contribution to the project,projects.role
 project url,projects.url
+project link,projects.url
+live link,projects.url
+repository url,projects.url
+technical skills,skills
+skills and technologies,skills
+core competencies,skills
+tech stack,skills
+tools,skills
+frameworks,skills
+programming languages,skills
+areas of expertise,skills
+favourite colour,other
+favorite color,other
+how did you hear about us,other
+employee id,other
+department code,other
+tax id,other
+branch office,other

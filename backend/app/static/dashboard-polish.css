@@ -1,0 +1,88 @@
+.personal-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 0;
+}
+
+.span-all { grid-column: 1 / -1; }
+
+.field-block {
+  margin: 0 0 20px;
+  padding: 0 0 20px;
+  border-bottom: 1px solid var(--line);
+}
+
+.field-block:last-of-type {
+  border-bottom: 0;
+  padding-bottom: 0;
+}
+
+.cv-status {
+  margin: 0 0 12px;
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.preview h3 {
+  display: flex;
+  gap: 8px;
+  align-items: baseline;
+  flex-wrap: wrap;
+  font-size: 14px;
+}
+
+#cv-filename {
+  color: var(--muted);
+  font-weight: 400;
+  font-size: 12px;
+}
+
+.cv-sections {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px 24px;
+  margin: 16px 0;
+}
+
+.cv-sections strong {
+  display: block;
+  font-size: 12px;
+  color: var(--muted);
+  font-weight: 600;
+}
+
+.cv-sections p {
+  margin: 4px 0 0;
+  color: var(--ink);
+  font-size: 13px;
+  line-height: 1.45;
+}
+
+.settings-panel { max-width: 560px; }
+.settings-kicker { display: none; }
+.settings-panel h2 { margin-bottom: 8px; }
+.settings-copy { margin: 0 0 12px; }
+
+.settings-list {
+  margin: 0 0 16px;
+  padding: 0 0 0 18px;
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+.settings-actions {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+
+.settings-note {
+  margin: 0;
+  color: var(--muted);
+  font-size: 12px;
+}
+
+@media (max-width: 760px) {
+  .cv-sections { grid-template-columns: 1fr; }
+}
