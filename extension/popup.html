@@ -1,1 +1,39 @@
-<!doctype html><html><head><meta charset="utf-8"><link rel="stylesheet" href="styles.css"></head><body><main><header><span class="mark">✦</span><div><h1>Automatic Form Filler</h1><p id="status">Checking local backend…</p></div></header><button id="scan">Scan form</button><p id="summary" class="muted">Nothing scanned yet.</p><section id="review" hidden><h2>Review autofill</h2><div id="items"></div><button id="fill" class="primary">Fill approved fields</button></section><p id="message" role="status"></p></main><script src="popup.js"></script></body></html>
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <main>
+    <header>
+      <div>
+        <h1><span class="brand">AutoForm</span></h1>
+        <p class="tagline">Private, local form filling.</p>
+        <p id="status" hidden></p>
+      </div>
+    </header>
+
+    <button id="scan" type="button" hidden>Scan form</button>
+    <p id="summary" class="muted" hidden></p>
+
+    <section id="review" hidden>
+      <div class="review-head">
+        <h2>Review autofill</h2>
+        <div class="filters" role="tablist" aria-label="Filter fields">
+          <button type="button" class="filter active" data-filter="all">All</button>
+          <button type="button" class="filter" data-filter="matched">Matched</button>
+          <button type="button" class="filter" data-filter="open">Written</button>
+          <button type="button" class="filter" data-filter="none">Unmatched</button>
+        </div>
+      </div>
+      <button id="generate-all" class="secondary" type="button">Draft all written answers</button>
+      <div id="items"></div>
+      <button id="fill" class="primary" type="button">Fill approved fields</button>
+    </section>
+
+    <p id="message" role="status" hidden></p>
+  </main>
+  <script src="popup.js"></script>
+</body>
+</html>

@@ -73,7 +73,7 @@ COLLECTION_FIELDS = {
 
 RULES = {
     'personal.email': (r'e-?mail(?:\s*(?:address|id|address\s+id))?|contact\s*email|work\s*email|mail\s*id', 100),
-    'personal.phone': (r'phone(?:\s*(?:number|no\.?|#))?|mobile(?:\s*(?:number|no\.?))?|telephone|\btel\b|cell(?:\s*(?:number|no\.?))?|contact\s*(?:number|phone)', 100),
+    'personal.phone': (r'phone(?:\s*(?:number|no\.?|#))?|mobile(?:\s*(?:number|no\.?|phone))?|telephone(?:\s*(?:number|no\.?))?|\btel\b|cell(?:\s*(?:number|no\.?|phone))?|contact\s*(?:number|phone|telephone)', 100),
     'personal.date_of_birth': (r'date\s+of\s+birth|\bd\.?o\.?b\.?\b|birth\s*date|birthday|date\s+born', 100),
     'personal.linkedin': (r'linked\s*-?in(?:\s*(?:profile|url|address))?', 100),
     'personal.github': (r'git\s*-?hub(?:\s*(?:profile|url|address))?|source\s*code\s*profile', 100),
@@ -91,25 +91,26 @@ RULES = {
     'personal.headline': (r'current\s*(?:job\s*)?title|professional\s*title|desired\s*(?:job\s*)?title|target\s*role|headline|occupation|profession', 90),
     'personal.current_company': (r'current\s*(?:employer|company|organisation|organization)|present\s*(?:employer|company)|current\s*workplace', 82),
     'personal.graduation_year': (r'graduation\s*year|year\s+of\s+graduation|grad\s*year|expected\s*graduation', 80),
-    'personal.summary': (r'professional\s*summary|career\s*summary|professional\s*profile|career\s*objective|short\s*bio|about\s*me|personal\s*summary', 80),
+    'personal.summary': (r'professional\s*summary|career\s*summary|professional\s*profile|career\s*objective|short\s*bio|about\s*me|personal\s*summary|tell\s+(?:us|me)\s+about\s+yourself|introduce\s+yourself|professional\s+background|career\s+overview|brief\s+bio', 84),
     'personal.first_name': (r'first\s*name|given\s*name|forename|firstname', 78),
     'personal.last_name': (r'last\s*name|family\s*name|surname|sur\s*name|lastname', 78),
     'personal.location': (r'location|city|town|country|state\s*/\s*province|province|region|current\s*location|based\s*in|where\s+are\s+you\s+based', 60),
     'education.institution': (r'(?:college|universit\w+|school|institute|institution|academy|campus|polytechnic|alma\s+mater)\w*', 95),
     'education.degree': (r'degree|qualification|diploma|bachelor\w*|master\w*|doctora\w*|\bmba\b|\bmsc\b|\bms\b|\bbsc\b|\bbs\b|\bba\b|\bb\.?sc\b|\bm\.?sc\b|\bph\.?d\b|education\s*level|highest\s*qualification|academic\s*qualification', 92),
     'education.field': (r'field\s+of\s*study|area\s+of\s*study|major|speciali[sz]ation|discipline|course\s+of\s*study|\bsubject\b|\bdepartment\b', 92),
+    'education.description': (r'educational\s+background|academic\s+background|describe\s+your\s+education|tell\s+(?:us|me)\s+about\s+your\s+education', 86),
     'education.end_date': (r'graduation\s*date|date\s+of\s+graduation|completion\s*date|education\s*end|(?:education|academic|school|university|college)\s*end\s*date', 88),
     'education.start_date': (r'(?:education|academic|school|university|college)\s*start(?:\s*date)?|joining\s*date\s*of\s*school|from\s*year\s*of\s*study', 86),
     'education.grade': (r'\bgrade\b|\bgpa\b|\bcgpa\b|marks?\b|final\s*score|class\s*obtained', 76),
     'experience.company': (r'compan(?:y|ies)|employer|organisation|organization|\bfirm\b|business\s*name|workplace|previous\s*employer|where\s+did\s+you\s+work|company\s+name', 90),
     'experience.position': (r'job\s*title|\btitle\b|\brole\b|\bposition\b|designation|current\s*title|job\s*role', 86),
-    'experience.description': (r'job\s*description|role\s*description|responsibilit\w*|\bduties\b|what\s+did\s+you\s+do|describe\s+your\s+work', 84),
+    'experience.description': (r'job\s*description|role\s*description|responsibilit\w*|\bduties\b|what\s+did\s+you\s+do|describe\s+your\s+(?:work|experience)|tell\s+(?:us|me)\s+about\s+your\s+(?:(?:work|professional|previous)\s+)?experience|tell\s+(?:us|me)\s+about\s+your\s+work', 86),
     'experience.start_date': (r'(?:employment|job|work|role|position)?\s*start\s*date|employment\s*start|job\s*start|joining\s*date|from\s*date|start\s*date', 88),
     'experience.end_date': (r'(?:employment|job|work|role|position)?\s*end\s*date|employment\s*end|job\s*end|to\s*date|leaving\s*date|end\s*date', 88),
     'projects.technologies': (r'technologies\s*(?:used|in)|tools?\s*(?:used|in)|built\s*with|stack\s*used|tech\s*used', 86),
     'projects.role': (r'your\s*role\s+in|role\s+in\s+(?:the|this|that)\s+project|contribution\s*(?:to|in)|what\s+did\s+you\s+build', 84),
     'projects.url': (r'project\s*(?:url|link|repo)|live\s*(?:link|url|demo)|demo\s*(?:link|url)|repository\s*url|github\s*repo', 84),
-    'projects.description': (r'project\s*description|project\s*summary|project\s*details|describe\s+(?:the|your|a)\s+project', 84),
+    'projects.description': (r'project\s*description|project\s*summary|project\s*details|describe\s+(?:the|your|a)\s+project|tell\s+(?:us|me)\s+about\s+(?:a|the|your)\s+project', 84),
     'projects.name': (r'project\s*name|\bprojects?\b|portfolio\s+project|case\s+study|initiative\s+name', 82),
     'skills': (r'skills?|technical\s*skills|core\s*competenc\w*|tech\s*stack|technologies|programming\s*languages|tools|frameworks|libraries|competencies|expertise|software\s+proficien\w*|proficient\s*in', 90),
     'personal.name': (r'full\s*name|your\s*name|candidate\s*name|applicant\s*name|legal\s*name|preferred\s*name|middle\s*name|\bname\b', 20),
@@ -121,7 +122,7 @@ NEGATIVE_RULES = {
     'personal.summary': (r'web\s*summary|salary\s*summary|summary\s*of\s*(?:the|this)\s+(?:form|application|role|job)',),
     'personal.date_of_birth': (r'start\s*date|end\s*date|joining\s*date|leaving\s*date|graduation|available\s+to\s+start',),
     'personal.availability': (r'(?:employment|job|work|education|academic|school|university|college|project)\s*start\s*date|start\s*date\s*(?:of|from)\s*(?:employment|job|work|education)|end\s*date',),
-    'skills': (r'skill\s*level|skills?\s*gap|gap\s*in\s*skills|describe\s+your\s*skills',),
+    'skills': (r'skill\s*level|skills?\s*gap|gap\s*in\s*skills',),
     'education.degree': (r'degree\s*of\s+(?:the\s+)?(?:problem|error|change)',),
     'experience.company': (r'company\s+name\s+of\s+previous',),
     'experience.start_date': (r'(?:education|academic|school|university|college)\s*start|available\s+to\s+start|earliest\s+start',),
@@ -133,7 +134,7 @@ FIELD_HINTS = {
     'personal.first_name': ('first name', 'given name', 'forename', 'firstname'),
     'personal.last_name': ('last name', 'family name', 'surname', 'lastname'),
     'personal.email': ('email', 'e mail', 'email address', 'contact email', 'work email', 'email id'),
-    'personal.phone': ('phone', 'mobile', 'telephone', 'cell phone', 'phone number', 'contact number'),
+    'personal.phone': ('phone', 'mobile', 'telephone', 'cell phone', 'phone number', 'telephone number', 'contact number', 'contact phone', 'primary phone'),
     'personal.location': ('location', 'city', 'country', 'state province', 'current location', 'based in', 'residence'),
     'personal.address': ('street address', 'home address', 'full address', 'mailing address', 'postal address', 'address line', 'address'),
     'personal.date_of_birth': ('date of birth', 'dob', 'birthday', 'birth date'),
@@ -141,7 +142,7 @@ FIELD_HINTS = {
     'personal.github': ('github', 'git hub'),
     'personal.portfolio': ('portfolio', 'personal website', 'personal site', 'behance', 'dribbble'),
     'personal.headline': ('current title', 'current job title', 'professional title', 'desired job title', 'target role', 'headline', 'occupation'),
-    'personal.summary': ('professional summary', 'career summary', 'about me', 'short bio', 'professional profile', 'career objective'),
+    'personal.summary': ('professional summary', 'career summary', 'about me', 'about yourself', 'tell us about yourself', 'tell me about yourself', 'introduce yourself', 'professional background', 'career overview', 'short bio', 'professional profile', 'career objective'),
     'personal.languages': ('languages', 'spoken language'),
     'personal.current_company': ('current company', 'current employer', 'present employer'),
     'personal.graduation_year': ('graduation year', 'year of graduation'),
@@ -153,7 +154,8 @@ FIELD_HINTS = {
     'personal.certifications': ('certification', 'certifications', 'licenses', 'accreditations'),
     'personal.awards': ('awards', 'honours', 'honors', 'achievements', 'accomplishments'),
     'personal.interests': ('hobbies', 'interests', 'leisure activities', 'outside of work'),
-    'education.institution': ('institution', 'university', 'college', 'school', 'institute', 'academy', 'alma mater'),
+    'education.institution': ('institution', 'university', 'college', 'school', 'institute', 'academy', 'alma mater', 'higher education', 'educational institution'),
+    'education.description': ('educational background', 'academic background', 'describe your education', 'tell us about your education'),
     'education.degree': ('degree', 'qualification', 'diploma', 'bachelor', 'bachelors', 'master', 'masters', 'phd', 'mba'),
     'education.field': ('major', 'field of study', 'specialization', 'specialisation', 'discipline', 'course of study'),
     'education.grade': ('grade', 'gpa', 'cgpa', 'marks'),
@@ -161,11 +163,11 @@ FIELD_HINTS = {
     'education.end_date': ('graduation date', 'date of graduation', 'end date', 'end year', 'completion date'),
     'experience.company': ('company', 'employer', 'organisation', 'organization', 'workplace', 'firm'),
     'experience.position': ('job title', 'role', 'position', 'designation', 'title'),
-    'experience.description': ('job description', 'role description', 'responsibilities', 'duties'),
+    'experience.description': ('job description', 'role description', 'responsibilities', 'duties', 'describe your work experience', 'tell us about your experience', 'tell us about your work experience'),
     'experience.start_date': ('start date', 'joining date'),
     'experience.end_date': ('end date', 'leaving date'),
     'projects.name': ('project name', 'project', 'portfolio project', 'case study'),
-    'projects.description': ('project description', 'project summary', 'describe the project'),
+    'projects.description': ('project description', 'project summary', 'describe the project', 'tell us about your project'),
     'projects.technologies': ('technologies used', 'tools used', 'built with', 'tech used'),
     'projects.role': ('your role in the project', 'role in the project', 'contribution'),
     'projects.url': ('project url', 'project link', 'live link', 'demo link', 'repository url'),
@@ -210,13 +212,19 @@ SECTION_GROUPS = {
 
 OPEN_ENDED = re.compile(
     r'\b('
-    r'why\b|describe\b|explain\b|tell\s+(?:us|me|us\s+about)|talk\s+(?:us|about)|'
+    r'why\b|describe\b|explain\b|elaborate\b|'
+    r'tell\s+(?:us|me)(?:\s+about)?|talk\s+(?:to\s+us\s+about|about)|'
     r'goals?\b|hiring\s+us|motivat\w*|interest(?:ed|s)?\b|strengths?\b|weakness\w*|'
     r'challenge\w*|achievement\w*|accomplish\w*|contribut\w*|good\s+fit|fit\s+for|'
-    r'your\s+approach|approach\s+to|how\s+would\s+you|what\s+would\s+you|what\s+makes\s+you|'
+    r'your\s+approach|approach\s+to|how\s+(?:would|do|did|have|has|could|might)\s+you|'
+    r'what\s+(?:would|do|did|have|has|could|might|makes|made|is|are)\s+you|'
+    r'when\s+have\s+you|describe\s+(?:a\s+)?(?:time|situation|project|experience)|'
+    r'what\s+was\s+your|what\s+are\s+your\s+(?:plans|goals|strengths|weaknesses)|'
     r'share\s+(?:an\s+)?example|walk\s+us|give\s+(?:an?\s+)?example|cover\s+letter|'
     r'personal\s+statement|introduce\s+yourself|about\s+yourself|what\s+can\s+we\s+know\s+about\s+you|'
-    r'what\s+are\s+you\s+looking\s+for|tell\s+us\s+about\s+your'
+    r'what\s+are\s+you\s+looking\s+for|tell\s+us\s+about\s+your|'
+    r'additional\s+information|anything\s+else\s+you\s+would\s+like|'
+    r'why\s+should\s+we|what\s+sets\s+you\s+apart|how\s+do\s+you\s+handle'
     r')', re.I)
 
 QUESTION_GUIDANCE = [
@@ -400,10 +408,13 @@ def primary_text(field):
     name/id attributes cannot override an exact on-page label.
     """
     visible = [
-        _attr(field, 'label'), _attr(field, 'question_hint'), _attr(field, 'placeholder'),
+        _attr(field, 'label'), _attr(field, 'question_hint'), _attr(field, 'question'), _attr(field, 'placeholder'),
         _attr(field, 'aria_label'), _attr(field, 'autocomplete').replace('-', ' '),
     ]
-    visible_text = normalise_text(' '.join(p for p in visible if p))
+    # The scanner may provide the same label as both `label` and
+    # `question_hint`; dedupe those values so generic labels stay identifiable.
+    unique_visible = list(dict.fromkeys(normalise_text(p) for p in visible if normalise_text(p)))
+    visible_text = ' '.join(unique_visible)
     if len(visible_text) >= 3:
         return visible_text
     parts = [
@@ -414,6 +425,14 @@ def primary_text(field):
     return normalise_text(' '.join(p for p in parts if p))
 
 
+def identifier_text(field):
+    """Names and ids are weaker than a real label, but often rescue generic labels."""
+    return normalise_text(' '.join(filter(None, [
+        _split_identifier(_attr(field, 'name')),
+        _split_identifier(_attr(field, 'id_attribute')),
+    ])))
+
+
 def secondary_text(field):
     """Surrounding context, used only when the field names itself poorly."""
     return normalise_text(' '.join(filter(None, [_attr(field, 'section'), _attr(field, 'nearby_text')])))
@@ -422,7 +441,7 @@ def secondary_text(field):
 def field_text(field):
     """Weighted view of a field used by the regex and hint layers."""
     weighted = ' ; '.join(filter(None, [
-        _attr(field, 'label'), _attr(field, 'question_hint'), _attr(field, 'placeholder'),
+        _attr(field, 'question'), _attr(field, 'label'), _attr(field, 'question_hint'), _attr(field, 'placeholder'),
         _attr(field, 'aria_label'), _attr(field, 'autocomplete').replace('-', ' '),
         _split_identifier(_attr(field, 'name')), _split_identifier(_attr(field, 'id_attribute')),
         _attr(field, 'section'), _attr(field, 'nearby_text')[:280],
@@ -432,7 +451,7 @@ def field_text(field):
 
 def ml_text(field):
     parts = [
-        _attr(field, 'label'), _attr(field, 'question_hint'), _attr(field, 'placeholder'),
+        _attr(field, 'label'), _attr(field, 'question_hint'), _attr(field, 'question'), _attr(field, 'placeholder'),
         _attr(field, 'aria_label'), _attr(field, 'autocomplete').replace('-', ' '),
         _split_identifier(_attr(field, 'name')), _split_identifier(_attr(field, 'id_attribute')),
         _attr(field, 'section'),
@@ -498,6 +517,10 @@ class FieldClassifier:
         collection = field.split('.', 1)[0] if '.' in field else ''
         if collection == group:
             return score + 32
+        # A bare "Name" in an education/work/project section names that
+        # record, not the applicant. Explicit first/last-name labels stay safe.
+        if field == 'personal.name' and group in {'education', 'experience', 'projects'}:
+            return score - 45
         if collection in {'education', 'experience', 'projects'}:
             return score - 22
         if field in {'personal.availability', 'personal.notice_period'} and group == 'experience':
@@ -553,14 +576,34 @@ class FieldClassifier:
     def predict(self, field):
         """Return (mapped_field, confidence, source)."""
         primary = primary_text(field)
+        identifiers = identifier_text(field)
         context = secondary_text(field)
         if not primary and not context:
+            type_field = self._type_guess(field, None, primary)
+            if type_field:
+                return type_field, 0.97, 'type'
             return None, 0.0, 'none'
         group = _section_group(context)
 
         auto = AUTOCOMPLETE_FIELDS.get(_attr(field, 'autocomplete').strip().lower())
         if auto:
             return auto, 0.99, 'autocomplete'
+
+        # Generic "Name" labels inherit the meaning of their form section.
+        if primary in {'name', 'name of'}:
+            contextual_field = {
+                'education': 'education.institution',
+                'experience': 'experience.company',
+                'projects': 'projects.name',
+            }.get(group)
+            if contextual_field:
+                return contextual_field, 0.94, 'section'
+            if identifiers:
+                identifier_hints = self._hint_candidates(identifiers, group)
+                if identifier_hints and identifier_hints[0][2] in {
+                    'education.institution', 'experience.company', 'projects.name'
+                }:
+                    return identifier_hints[0][2], 0.92, 'identifier'
 
         hint_pool = self._hint_candidates(primary, group)
         if hint_pool:
@@ -579,15 +622,25 @@ class FieldClassifier:
         if type_field:
             return type_field, 0.97, 'type'
 
+        # Framework generated ids often carry the only useful signal when the
+        # visible label is a generic placeholder such as "Enter value".
+        if identifiers:
+            identifier_hints = self._hint_candidates(identifiers, group)
+            if identifier_hints:
+                return identifier_hints[0][2], 0.90, 'identifier'
+            identifier_rules = self._rule_candidates(identifiers, group)
+            if identifier_rules:
+                return identifier_rules[0][2], 0.88, 'identifier'
+
         if self.model is not None:
             sample = ml_text(field)
             if sample:
                 probabilities = self.model.predict_proba(self.vectorizer.transform([sample]))[0]
                 index = probabilities.argmax()
                 field_name = self.model.classes_[index]
-                if field_name == 'other':
-                    return None, float(probabilities[index]), 'other'
-                return field_name, float(probabilities[index]), 'ml'
+                confidence = float(probabilities[index])
+                if field_name != 'other' and confidence >= 0.60:
+                    return field_name, confidence, 'ml'
 
         secondary_hints = self._hint_candidates(context, group) if context else []
         secondary_rules = self._rule_candidates(context, group) if context else []
@@ -606,8 +659,16 @@ classifier = FieldClassifier()
 
 def detect_open_ended(field):
     """Decide whether a field needs a written answer rather than a stored value."""
-    text = field_text(field)
-    multiline = _attr(field, 'tag') == 'textarea' or _attr(field, 'type') == 'contenteditable'
+    kind = _attr(field, 'type').lower()
+    if kind in {'email', 'tel', 'url', 'date', 'month', 'datetime-local', 'number', 'select-one', 'select-multiple'}:
+        return False, ''
+    # Decide from the field's own prompt, not nearby section text or generated
+    # DOM ids. Those can contain unrelated question words from adjacent fields.
+    text = normalise_text(' '.join(filter(None, (
+        _attr(field, 'question'), _attr(field, 'label'), _attr(field, 'question_hint'),
+        _attr(field, 'placeholder'), _attr(field, 'aria_label'),
+    ))))
+    multiline = _attr(field, 'tag').lower() == 'textarea' or _attr(field, 'type').lower() == 'contenteditable'
     if OPEN_ENDED.search(text) or (multiline and '?' in text):
         return True, question_of(field)
     if not multiline:

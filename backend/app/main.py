@@ -73,15 +73,35 @@ def delete_skill(item_id:int,db:Session=Depends(get_db)):
 def classify(payload:ClassifyRequest,db:Session=Depends(get_db)):
     result=[]
     for f in payload.fields:
-        open_ended,question=detect_open_ended(f)
-        if open_ended:
-            result.append({'id':f.id,'mapped_field':None,'confidence':0.0,'value':'','option_value':None,'kind':'open_ended','question':question or f.label or f.placeholder or f.nearby_text,'requires_review':True});continue
-        mapped,confidence,source=classifier.predict(f)
-        if mapped and confidence>=settings.suggest_threshold:
-            value,option_value=resolve_value(db,mapped,f.options,f.option_values)
-        else:
-            value,option_value='',None
-        result.append({'id':f.id,'mapped_field':mapped if confidence>=settings.suggest_threshold else None,'confidence':confidence,'value':value,'option_value':option_value,'kind':'simple','source':source,'requires_review':confidence<settings.auto_fill_threshold,'detected_label':f.label or f.name or f.id_attribute})
+        try:
+            mapped,confidence,source=classifier.predict(f)
+            confidence=float(confidence or 0)
+        except Exception:
+            mapped,confidence,source=None,0.0,'none'
+
+        matched=mapped is not None and confidence>=settings.suggest_threshold
+        value,option_value='',None
+        if matched:
+            try:
+                value,option_value=resolve_value(db,mapped,f.options,f.option_values)
+                value=str(value or '')
+            except Exception:
+                # One unsupported control or bad option list must not cancel
+                # classification for the rest of the form.
+                value,option_value='',None
+
+        # Existing profile/database data wins over essay generation. Only
+        # offer a generated answer when there is no saved value to fill.
+        if not value:
+            try:
+                open_ended,question=detect_open_ended(f)
+            except Exception:
+                open_ended,question=False,''
+            if open_ended:
+                result.append({'id':f.id,'mapped_field':None,'confidence':0.0,'value':'','option_value':None,'kind':'open_ended','question':question or f.label or f.placeholder or f.nearby_text,'requires_review':True,'detected_label':f.label or f.name or f.id_attribute})
+                continue
+
+        result.append({'id':f.id,'mapped_field':mapped if matched else None,'confidence':confidence,'value':value,'option_value':option_value,'kind':'simple','source':source,'requires_review':confidence<settings.auto_fill_threshold,'detected_label':f.label or f.name or f.id_attribute})
     return {'fields':result}
 @app.post('/context')
 def context(payload:GenerateRequest,db:Session=Depends(get_db)):

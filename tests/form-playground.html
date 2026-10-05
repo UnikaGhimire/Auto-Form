@@ -1,0 +1,138 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Form detector test page</title>
+<style>
+  body { font-family: system-ui, sans-serif; max-width: 760px; margin: 24px auto; }
+  fieldset { border: 1px solid #ccc; margin: 16px 0; }
+  legend { font-weight: 600; }
+  label { display: block; margin: 8px 0; }
+  input, select, textarea { width: 320px; padding: 6px; }
+  .form-group { margin: 10px 0; }
+  .row { display: flex; gap: 8px; }
+</style>
+</head>
+<body>
+<h1>Form detector test page</h1>
+<p>Open the extension popup on this page and press <b>Scan form</b>. Every control below exercises a different detection path.</p>
+
+<form>
+  <fieldset>
+    <legend>Personal details</legend>
+    <div class="row">
+      <label for="fn">First Name</label><input id="fn" name="given_name" autocomplete="given-name" required>
+      <label for="ln">Last Name</label><input id="ln" name="family_name" autocomplete="family-name">
+    </div>
+    <label for="em">Email Address</label><input id="em" name="txtEmail" type="email" autocomplete="email">
+    <label for="ph">Phone Number</label><input id="ph" name="txtPhone" type="tel">
+    <label for="dob">Date of Birth</label><input id="dob" name="txtDOB" type="date">
+    <label for="city">Current City</label><input id="city" name="txtCity">
+  </fieldset>
+
+  <fieldset>
+    <legend>Links and eligibility</legend>
+    <label for="li">LinkedIn Profile URL</label><input id="li" name="txtLinkedIn" type="url">
+    <label for="gh">GitHub</label><input id="gh" name="txtGitHub" type="url">
+    <label for="auth">Are you legally authorized to work in the UK?</label>
+    <select id="auth" name="ddlAuth"><option value="">Please select</option><option>Yes</option><option>No</option></select>
+    <label for="visa">Will you now or in the future require visa sponsorship?</label>
+    <select id="visa" name="ddlVisa"><option value="">Select an option</option><option>Yes</option><option>No</option></select>
+    <label for="notice">Notice Period</label><input id="notice" name="txtNotice">
+    <label for="salary">Expected Salary</label><input id="salary" name="txtSalary">
+  </fieldset>
+
+  <fieldset>
+    <legend>Education</legend>
+    <div class="form-group"><label>Institution</label><input name="txtInstitution"></div>
+    <div class="form-group"><label>Degree</label><input name="txtDegree"></div>
+    <div class="form-group"><label>Field of Study</label><input name="txtField"></div>
+    <div class="form-group"><label>Graduation Year</label><input name="txtGradYear"></div>
+  </fieldset>
+
+  <fieldset>
+    <legend>Work Experience</legend>
+    <div class="form-group"><label>Company</label><input name="txtCompany"></div>
+    <div class="form-group"><label>Job Title</label><input name="txtTitle"></div>
+    <div class="form-group"><label>Start Date</label><input name="txtStart"></div>
+    <div class="form-group"><label>End Date</label><input name="txtEnd"></div>
+  </fieldset>
+
+  <fieldset>
+    <legend>Projects</legend>
+    <div class="form-group"><label>Project Name</label><input name="txtProject"></div>
+    <div class="form-group"><label>Your Role in the Project</label><input name="txtProjectRole"></div>
+    <div class="form-group"><label>Technologies Used</label><input name="txtTech"></div>
+  </fieldset>
+
+  <fieldset>
+    <legend>Written answers</legend>
+    <p>Why do you want to work with us?</p>
+    <textarea name="txtWhy" rows="3"></textarea>
+    <p>Tell us about a difficult problem you solved and what you did about it.</p>
+    <textarea name="txtChallenge" rows="3"></textarea>
+    <h3>Describe a project you are most proud of</h3>
+    <div contenteditable="true" role="textbox" aria-label="Project description"></div>
+  </fieldset>
+
+  <fieldset>
+    <legend>Structured long text</legend>
+    <label>Street Address</label><textarea name="txtAddress" rows="2"></textarea>
+    <label>Technical Skills</label><textarea name="txtSkills" rows="2"></textarea>
+  </fieldset>
+
+  <fieldset>
+    <legend>Choice controls</legend>
+    <label><input type="radio" name="shift" value="yes" checked> Eligible to work</label>
+    <label><input type="radio" name="shift" value="no"> Not yet eligible</label>
+    <label><input type="checkbox" name="consent" value="yes"> Yes, contact me about my application</label>
+    <label>Favourite Colour</label>
+    <select name="ddlColour"><option>Choose</option><option>Red</option><option>Blue</option></select>
+  </fieldset>
+
+  <fieldset>
+    <legend>Harder label layouts</legend>
+    <div class="form-group">
+      <span class="control-label">Middle Name</span>
+      <input name="txtMiddle">
+    </div>
+    <table>
+      <tr><th>Postal Address</th><td><input name="txtPostal"></td></tr>
+      <tr><th>LinkedIn URL</th><td><input name="txtLiTable"></td></tr>
+    </table>
+    <div class="form-group">
+      <input name="ctl00_ContentPlaceHolder1_txtEmailAlt" placeholder="Work email address">
+    </div>
+    <div id="shadow-host"></div>
+  </fieldset>
+
+  <fieldset>
+    <legend>ARIA / Google-Forms style widgets</legend>
+    <div role="listitem">
+      <div role="heading" aria-level="3">Which languages do you speak?</div>
+      <div role="group">
+        <div role="checkbox" aria-checked="false" tabindex="0">English</div>
+        <div role="checkbox" aria-checked="false" tabindex="0">Nepali</div>
+        <div role="checkbox" aria-checked="false" tabindex="0">Hindi</div>
+      </div>
+    </div>
+    <div role="listitem">
+      <div role="heading" aria-level="3">Are you available to start immediately?</div>
+      <div role="radiogroup">
+        <div role="radio" aria-checked="false" tabindex="0" name="avail">Yes</div>
+        <div role="radio" aria-checked="false" tabindex="0" name="avail">No</div>
+      </div>
+    </div>
+    <label><input type="checkbox" name="terms"> I agree to the terms</label>
+    <label><input type="checkbox" name="updates"> Send me updates</label>
+  </fieldset>
+
+  <button type="submit">Submit manually</button>
+</form>
+<script>
+  const host = document.getElementById('shadow-host');
+  const root = host.attachShadow({ mode: 'open' });
+  root.innerHTML = '<label for="shadow-phone">Mobile Phone</label><input id="shadow-phone" name="shadowPhone" type="tel">';
+</script>
+</body>
+</html>

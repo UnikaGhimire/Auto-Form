@@ -14,7 +14,7 @@ class ProjectIn(BaseModel): name:str=Field(min_length=1,max_length=300); descrip
 class FieldIn(BaseModel):
     id:str=Field(max_length=200); tag:str='input'; type:str='text'; name:str=''; id_attribute:str=''; label:str=''; placeholder:str=''; aria_label:str=''; nearby_text:str=''; required:bool=False; options:list[str]=[]
     section:str=''; question_hint:str=''; question:str=''; autocomplete:str=''; option_values:list[str]=[]; current_value:str=''; visible:bool=True
-class ClassifyRequest(BaseModel): fields:list[FieldIn]=Field(max_length=200)
+class ClassifyRequest(BaseModel): fields:list[FieldIn]
 class AnswerIn(BaseModel): question:str=Field(min_length=3,max_length=3000); answer:str=Field(min_length=1,max_length=10000)
 class GenerateRequest(BaseModel): question:str=Field(min_length=3,max_length=3000); length:Literal['concise','standard','detailed']='standard'
 class SaveAnswerRequest(BaseModel): question:str=Field(min_length=3,max_length=3000); answer:str=Field(min_length=1,max_length=10000)
