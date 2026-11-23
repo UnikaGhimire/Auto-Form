@@ -1,6 +1,6 @@
 # AutoForm
 
-AutoForm is a local-first Chrome extension and Python API that helps a person review and fill web forms from information they have saved in a local profile. It can map ordinary fields to saved values and draft answers for open-ended questions using a local language model. It does not submit forms.
+AutoForm is the local-first Chrome extension and Python API that helps a person review and fill web forms from information they have saved in a local profile. It can map ordinary fields to saved values and draft answers for open-ended questions using a local language model. It does not submit forms.
 
 This README describes the implementation in this repository. The API reference in [`docs/api.md`](docs/api.md) provides another route-oriented view, and FastAPI serves interactive OpenAPI documentation at `http://127.0.0.1:8000/docs` while running.
 
