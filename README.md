@@ -349,7 +349,7 @@ Optional settings are loaded from `backend/.env` using Pydantic Settings. Defaul
 | `UPLOAD_DIR` | `backend/data/uploads/cv` | Directory for uploaded CV files. |
 | `MODEL_DIR` | `backend/models` | Directory containing the two Joblib classifier artifacts. |
 | `OLLAMA_BASE_URL` | `http://127.0.0.1:11434` | Local Ollama server base URL. |
-| `OLLAMA_MODEL` | `qwen3:4b` | Preferred installed generation model. |
+| `OLLAMA_MODEL` | `qwen3:4b` | Preferred installed generation model. |             
 | `OLLAMA_FALLBACK_MODELS` | A comma-separated list in `config.py` | Preferred local alternatives if the configured model is not installed. |
 | `ANSWER_CONTEXT_CHARS` | `6000` | Maximum assembled answer evidence characters, constrained to 1,000 through 20,000. |
 | `AUTO_FILL_THRESHOLD` | `0.90` | Confidence boundary for `requires_review` metadata. |
