@@ -1,6 +1,8 @@
 # AutoForm
 
-AutoForm is a local-first Chrome extension and Python API that helps a person review and fill web forms from information they have saved in a local profile. It can map ordinary fields to saved values and draft answers for open-ended questions using a local language model. It does not submit forms.
+AutoForm is a browser extension (Firefox and Chrome) and Python API that helps a person review and fill web forms from information they have saved in a local profile. It can map ordinary fields to saved values and draft answers for open-ended questions using a local language model. It does not submit forms.
+
+> **Hosting publicly / publishing on Firefox:** see [`DEPLOYMENT.md`](DEPLOYMENT.md). The backend runs either locally (SQLite + Ollama, as described below) or hosted for many users (Postgres + an OpenAI-compatible LLM API such as Groq). Each extension install gets its own anonymous account and API key.
 
 This README describes the implementation in this repository. The API reference in [`docs/api.md`](docs/api.md) provides another route-oriented view, and FastAPI serves interactive OpenAPI documentation at `http://127.0.0.1:8000/docs` while running.
 
@@ -66,7 +68,7 @@ The extension calls only the configured localhost backend. The code has no cloud
 ### Requirements
 
 - Windows, macOS, or Linux with Python 3.10 or newer recommended.
-- Google Chrome or a Chromium browser supporting Manifest V3 extensions.
+- Firefox 140+ or Google Chrome / a Chromium browser supporting Manifest V3 extensions.
 - Ollama and a compatible local text model only if written-answer generation is wanted.
 
 Install Python dependencies and start the local backend from the `backend` directory:
@@ -75,7 +77,7 @@ Install Python dependencies and start the local backend from the `backend` direc
 cd backend
 python -m venv .venv
 .venv\Scripts\activate
-pip install -r requirements.txt
+pip install -r requirements-dev.txt
 python training/train.py
 uvicorn app.main:app --host 127.0.0.1 --port 8000
 ```
@@ -90,7 +92,7 @@ ollama pull qwen3:4b
 
 The configured default is `qwen3:4b`. The backend first uses the configured model if it is installed, then tries configured fallback names. If none of those are installed, it chooses the largest locally listed non-embedding model. The model must fit the host machine's resources. Ollama is not required to scan a form or map saved profile data.
 
-Load the extension in Chrome:
+Load the extension in Firefox via `about:debugging#/runtime/this-firefox` → **Load Temporary Add-on** → `extension/manifest.json`, or in Chrome:
 
 1. Visit `chrome://extensions` and enable **Developer mode**.
 2. Select **Load unpacked** and choose this repository's `extension/` directory.
@@ -102,7 +104,9 @@ Load the extension in Chrome:
 
 ### Updating the backend URL
 
-The API address is currently a constant in `extension/background.js`, and the host permission in `extension/manifest.json` must authorize the same address. If changing the port or host, update both. The documented default binds only to loopback for local use.
+The default API address is `DEFAULT_API` in `extension/background.js`, and the host permission in `extension/manifest.json` must authorize the same address. If you change the host, update both. To point an installed extension at a local backend without editing code, run `chrome.storage.local.set({ apiBase: 'http://127.0.0.1:8000' })` from the extension's background console.
+
+On first use the extension calls `POST /auth/register` and stores the returned API key. Every other request sends it as `Authorization: Bearer <key>`. Open the dashboard from the popup's **Edit profile** button: it passes the key to the page in the URL fragment. A dashboard opened directly at `/` has no key and cannot load a profile.
 
 ## Using the extension
 
@@ -261,15 +265,20 @@ By default, SQLAlchemy stores data in `backend/data/app.db`. Tables are created 
 
 | Table | Stored information |
 | --- | --- |
-| `profile` | One profile row with name, email, phone, location, address, birth date, web profiles, headline, summary, languages, current company, graduation year, work authorization, visa status, availability, notice period, salary expectation, references, certifications, awards, and interests. |
+| `users` | Anonymous accounts: id and a SHA-256 hash of the API key (the key itself is never stored). |
+| `profile` | One profile row per user with name, email, phone, location, address, birth date, web profiles, headline, summary, languages, current company, graduation year, work authorization, visa status, availability, notice period, salary expectation, references, certifications, awards, and interests. |
 | `education` | Institution, degree, field, start/end dates, grade, description. |
 | `experience` | Company, position, start/end dates, description. |
-| `skills` | Unique skill names. |
+| `skills` | Skill names, unique per user. |
 | `projects` | Name, description, technologies, role, URL. |
 | `previous_answers` | Question and approved answer, with created/updated timestamps. |
 | `cv_documents` | Original filename, extracted text, created timestamp. |
 
-CV source files are stored below `backend/data/uploads/cv/` by default. The database stores extracted text for answer context. Uploading a new CV replaces the database's current CV record; the uploaded file is written under a generated filename. The delete-all endpoint removes files in the configured CV upload directory along with database records.
+Every table except `users` has a `user_id` column. Requests are authenticated in `app/auth.py`, and `app/database.py` scopes every ORM query in that request to the user's rows automatically, so service code cannot read another user's data by accident. Set `DATABASE_URL` to a Postgres URL for hosting (`postgres://` and `postgresql://` URLs are accepted).
+
+Only the extracted CV text is stored; the uploaded file is not written to disk. Uploading a new CV replaces that user's current CV record. The delete-all endpoint removes all of the calling user's records.
+
+If you have an `app.db` created before multi-user support, delete it (or start with a new `DATABASE_URL`): its old global unique constraint on skill names is not migrated automatically.
 
 ## CV extraction
 
@@ -279,11 +288,13 @@ CV sections and relevant excerpts can contribute evidence to answer generation. 
 
 ## HTTP API reference
 
-All routes are served on the local backend. Interactive request/response schemas are available at `/docs`. The primary routes are:
+Every route except `/health`, `/auth/register` and the dashboard static files requires `Authorization: Bearer <api key>`. Interactive request/response schemas are available at `/docs`. The primary routes are:
 
 | Method and path | Purpose |
 | --- | --- |
-| `GET /health` | Backend status, whether the classifier loaded, configured Ollama URL, and selected/configured answer model. |
+| `GET /health` | Backend status, whether the classifier loaded, the LLM provider, and the selected/configured answer model. No key needed. |
+| `POST /auth/register` | Create an anonymous account and return its `api_key`. Rate limited per IP. |
+| `GET /auth/me`, `DELETE /auth/account` | Show the caller's user id, or delete the account and all of its data. |
 | `GET /` | Local profile dashboard. |
 | `GET /profile`, `PUT /profile`, `DELETE /profile` | Read, replace, or remove the profile singleton. |
 | `GET /education`, `POST /education`, `PUT /education/{item_id}`, `DELETE /education/{item_id}` | Education CRUD. |
@@ -297,7 +308,7 @@ All routes are served on the local backend. Interactive request/response schemas
 | `POST /answers/validate` | Validate a supplied answer against available context. |
 | `POST /answers/save` | Insert or update an approved answer by exact question text. |
 | `POST /cv/upload`, `GET /cv` | Upload a PDF/DOCX CV and retrieve the latest extracted text/sections. |
-| `POST /settings/delete-all-data` | Delete profile-related records and files after explicit confirmation. |
+| `POST /settings/delete-all-data` | Delete all of the caller's records after explicit confirmation. |
 
 ### Classification request example
 
@@ -333,10 +344,12 @@ Each result includes the input `id`, `mapped_field`, `confidence`, `value`, `opt
 
 ### Error behavior
 
-- `404` is used when updating or deleting a record that does not exist.
+- `401` means the API key is missing or unknown. The extension then registers a fresh key automatically.
+- `404` is used when updating or deleting a record that does not exist or belongs to another user.
+- `429` means a rate limit was reached (account creation, answer generation, or CV parsing); see `Retry-After`.
 - `409` indicates a duplicate skill name.
 - `413` indicates a CV exceeds the configured byte limit; `415` indicates an unsupported extension; `422` indicates invalid input, an unreadable CV, or no profile evidence for generation.
-- `503` indicates the local Ollama call failed during answer generation.
+- `503` indicates the LLM call (Ollama or the hosted API) failed during answer generation.
 - The classification endpoint isolates errors per field where possible, so one unresolvable field does not prevent results for the rest of the submitted fields.
 
 ## Configuration
@@ -346,8 +359,12 @@ Optional settings are loaded from `backend/.env` using Pydantic Settings. Defaul
 | Setting | Default | Purpose |
 | --- | --- | --- |
 | `DATABASE_URL` | SQLite file at `backend/data/app.db` | SQLAlchemy connection string. |
-| `UPLOAD_DIR` | `backend/data/uploads/cv` | Directory for uploaded CV files. |
 | `MODEL_DIR` | `backend/models` | Directory containing the two Joblib classifier artifacts. |
+| `LLM_PROVIDER` | `auto` | `openai` (any OpenAI-compatible API), `ollama`, or `auto` (`openai` when `LLM_API_KEY` is set). |
+| `LLM_BASE_URL` | `https://api.groq.com/openai/v1` | Base URL of the OpenAI-compatible API. |
+| `LLM_API_KEY` | empty | API key for the hosted LLM. |
+| `LLM_MODEL` | `llama-3.1-8b-instant` | Hosted model name. |
+| `LLM_TIMEOUT_SECONDS` | `60` | Timeout for hosted LLM calls. |
 | `OLLAMA_BASE_URL` | `http://127.0.0.1:11434` | Local Ollama server base URL. |
 | `OLLAMA_MODEL` | `qwen3:4b` | Preferred installed generation model. |             
 | `OLLAMA_FALLBACK_MODELS` | A comma-separated list in `config.py` | Preferred local alternatives if the configured model is not installed. |
@@ -355,12 +372,21 @@ Optional settings are loaded from `backend/.env` using Pydantic Settings. Defaul
 | `AUTO_FILL_THRESHOLD` | `0.90` | Confidence boundary for `requires_review` metadata. |
 | `SUGGEST_THRESHOLD` | `0.60` | Minimum classifier confidence for accepting a mapping. |
 | `MAX_CV_BYTES` | `10485760` | Maximum uploaded CV size in bytes. |
+| `REGISTER_LIMIT_PER_HOUR` | `20` | New accounts per client IP per hour. |
+| `GENERATE_LIMIT_PER_HOUR` | `30` | Answer drafts per user per hour. |
+| `CV_UPLOAD_LIMIT_PER_HOUR` | `20` | CV parses per user per hour. |
+| `MAX_FIELDS_PER_SCAN` | `400` | Maximum fields accepted by one classify request. |
+| `CORS_ORIGINS` | empty | Extra web origins allowed by CORS. Extension origins are always allowed. |
 
-The extension's backend URL is currently fixed in `extension/background.js`; changing the backend host also requires updating the extension permission in `extension/manifest.json`.
+See [`backend/.env.example`](backend/.env.example). The extension's default backend URL is `DEFAULT_API` in `extension/background.js`; changing the host also requires updating `host_permissions` in `extension/manifest.json`.
 
 ## Privacy and security
 
-The default setup binds the backend to loopback (`127.0.0.1`). Profile records, CV text/files, prior answers, and classifier artifacts are stored locally. Answer prompts go to the local Ollama endpoint configured for the backend. The extension requests `activeTab`, `storage`, and `scripting`, with a host permission for the local backend; its content script is declared for pages so it can inspect the active page when the popup workflow requests fields.
+**Hosted mode:** profile data, CV text, and the field descriptions of scanned forms are sent to the backend you deploy. Questions plus relevant profile excerpts are sent to the configured LLM provider. Publish a privacy policy that says so (template: [`PRIVACY.md`](PRIVACY.md)). Accounts are anonymous API keys stored as SHA-256 hashes, every query is user-scoped, and rate limits guard the free tiers. HTTPS comes from the host (Render terminates TLS).
+
+**Local mode:**
+
+The default setup binds the backend to loopback (`127.0.0.1`). Profile records, CV text/files, prior answers, and classifier artifacts are stored locally. Answer prompts go to the local Ollama endpoint configured for the backend. The extension requests `activeTab`, `storage`, and `scripting`, with host permissions for the backend. The content script is not declared for every page: the popup injects it into the active tab only when you open AutoForm there.
 
 This design avoids sending form/profile content to a remote service in the shipped code. It does not encrypt the local SQLite database or uploaded files, protect against malware or other local users, or validate that a user-provided Ollama endpoint is trustworthy. Use a trusted machine, secure OS account, and local endpoint configuration. Do not bind the development server to a public interface without adding appropriate authentication and transport protections.
 
@@ -368,6 +394,7 @@ To remove local profile records, prior answers, CV database entries, and files i
 
 ```powershell
 Invoke-RestMethod -Method Post -Uri http://127.0.0.1:8000/settings/delete-all-data `
+  -Headers @{ Authorization = 'Bearer <your api key>' } `
   -ContentType 'application/json' -Body '{"confirm":true}'
 ```
 
@@ -390,12 +417,13 @@ This operation is destructive. It does not delete the Python environment, model 
 
 | Symptom | Checks |
 | --- | --- |
-| Popup reports backend unavailable | Start Uvicorn on `127.0.0.1:8000`; check that the extension URL and manifest permission match. Open `/health` in the browser. |
+| Popup reports backend unavailable | Hosted: open `<backend>/health` in the browser (a sleeping free instance takes up to a minute to wake). Local: start Uvicorn on `127.0.0.1:8000` and set `apiBase` as described above. Check that the extension URL and manifest permission match. |
+| Dashboard says to open it from the extension | Use the popup's **Edit profile** button; the dashboard needs the extension's API key. |
 | No fields found | Use a normal webpage rather than a Chrome internal page; confirm visible enabled write-in controls exist; check whether the form is inside a cross-origin frame or closed shadow root. |
 | Fields map to the wrong profile key | Inspect the field label, section, `name`, `id`, and `autocomplete`; add/verify the saved profile data; inspect the returned `source` and confidence. Update matching rules or training samples for repeatable wording. |
 | Correct key but blank value | Add the data in the dashboard or relevant collection. For collection fields, confirm at least one record exists. |
 | Wrong dropdown choice | Confirm the profile wording matches an actual option. Review the suggestion before filling; approximate option matching has a minimum score threshold. |
-| Generate answer fails | Confirm Ollama is running at `OLLAMA_BASE_URL`, the selected model is installed (`ollama list`), and the profile/CV provides relevant context. Generation requires Ollama; mapping does not. |
+| Generate answer fails | Hosted: check `LLM_API_KEY`, `LLM_MODEL` and the provider's rate limits in the server logs. Local: confirm Ollama is running at `OLLAMA_BASE_URL`, the selected model is installed (`ollama list`), and the profile/CV provides relevant context. Generation requires Ollama; mapping does not. |
 | Model says no useful evidence | Add relevant profile, experience, education, projects, skills, previous approved answers, or readable CV text. `/context` shows evidence selection without generation. |
 | CV upload fails | Use a valid PDF or DOCX under the configured size limit. Image-only PDFs need OCR outside this implementation. |
 

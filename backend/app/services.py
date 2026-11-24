@@ -699,7 +699,7 @@ def _first_row(db, model):
 def get_value(db: Session, field: str):
     if not field:
         return ''
-    profile = db.get(Profile, 1)
+    profile = db.scalars(select(Profile).order_by(Profile.id)).first()
     if field in CANONICAL_FIELDS:
         column = CANONICAL_FIELDS[field]
         if column == FIRST_NAME:
@@ -796,7 +796,7 @@ def _question_terms(question):
 
 
 def _profile_row(db):
-    return db.get(Profile, 1)
+    return db.scalars(select(Profile).order_by(Profile.id)).first()
 
 
 def _profile_block(db):
@@ -1146,6 +1146,8 @@ async def resolve_model(client):
 
 def probe_model():
     """Synchronous model lookup for the health endpoint."""
+    if settings.provider == 'openai':
+        return settings.llm_model
     if _MODEL_CACHE['value']:
         return _MODEL_CACHE['value']
     try:
@@ -1195,6 +1197,8 @@ def dedupe_sentences(answer):
 
 def clean_answer(answer):
     text = str(answer or '').strip()
+    # Reasoning models (qwen3, deepseek-r1...) may wrap hidden thoughts in <think> tags.
+    text = re.sub(r'<think>.*?(</think>|$)', '', text, flags=re.S | re.I).strip()
     text = re.sub(r'^```[a-z]*\s*|\s*```$', '', text)
     text = AI_PREAMBLE.sub('', text)
     for _ in range(4):
@@ -1263,26 +1267,55 @@ async def _call_ollama(client, model, prompt, token_budget, temperature):
     return response.json().get('response', '')
 
 
+async def _call_openai(client, model, prompt, token_budget, temperature):
+    """Any OpenAI-compatible chat API: Groq, OpenRouter, Together, Gemini, OpenAI, vLLM..."""
+    response = await client.post(
+        f"{settings.llm_base_url.rstrip('/')}/chat/completions",
+        headers={'Authorization': f'Bearer {settings.llm_api_key}'},
+        json={
+            'model': model,
+            'messages': [{'role': 'user', 'content': prompt}],
+            'temperature': temperature,
+            'top_p': 0.9,
+            'max_tokens': token_budget,
+            'stream': False,
+        })
+    response.raise_for_status()
+    choices = response.json().get('choices') or [{}]
+    return (choices[0].get('message') or {}).get('content') or ''
+
+
 async def generate_local(question, context, answer_length='standard', guidance=None, missing=()):
+    """Draft an answer with the configured LLM provider (local Ollama or a hosted API)."""
     if guidance is None:
         _, guidance, _ = question_guidance(question)
     length_text, token_budget, max_words = LENGTH_GUIDANCE.get(answer_length, LENGTH_GUIDANCE['standard'])
     prompt = build_prompt(question, context, answer_length, guidance, missing)
+    hosted = settings.provider == 'openai'
+    call = _call_openai if hosted else _call_ollama
 
     try:
-        async with httpx.AsyncClient(timeout=90) as client:
-            model = await resolve_model(client)
-            raw = await _call_ollama(client, model, prompt, token_budget, 0.35)
+        async with httpx.AsyncClient(timeout=settings.llm_timeout_seconds if hosted else 90) as client:
+            model = settings.llm_model if hosted else await resolve_model(client)
+            raw = await call(client, model, prompt, token_budget, 0.35)
             answer = clean_answer(raw)
             correction = _diagnose(answer, question, context)
             if correction:
                 retry_prompt = build_prompt(question, context, answer_length, guidance, missing, correction)
-                raw = await _call_ollama(client, model, retry_prompt, token_budget, 0.15)
+                raw = await call(client, model, retry_prompt, token_budget, 0.15)
                 retry_answer = clean_answer(raw)
                 if not _diagnose(retry_answer, question, context):
                     answer = retry_answer
             return trim_to_word_limit(apply_first_person(answer), max_words)
+    except httpx.HTTPStatusError as error:
+        if error.response.status_code == 429:
+            raise RuntimeError('The answer service is busy right now. Please try again in a minute.') from error
+        if hosted:
+            raise RuntimeError('The answer service rejected the request. Check LLM_API_KEY and LLM_MODEL on the server.') from error
+        raise RuntimeError('Local Ollama is unavailable. Start Ollama and verify the selected model.') from error
     except httpx.HTTPError as error:
+        if hosted:
+            raise RuntimeError('The answer service could not be reached. Please try again shortly.') from error
         raise RuntimeError('Local Ollama is unavailable. Start Ollama and verify the selected model.') from error
 
 

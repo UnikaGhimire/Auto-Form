@@ -6,3 +6,6 @@ backend/data/uploads/
 backend/models/*.joblib
 .pytest_cache/
 backend/test.db
+backend/.env
+.env
+web-ext-artifacts/

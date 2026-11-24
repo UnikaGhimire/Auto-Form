@@ -2,7 +2,9 @@
 
 Interactive documentation is available from FastAPI at `/docs` while the service is running.
 
-Key routes: `GET /health`, `GET|PUT /profile`, CRUD routes for `/education`, `/experience`, `/projects`, `/skills`, and `/answers`; `POST /cv/upload` and `GET /cv` for uploading and restoring the locally saved CV preview; `POST /fields/classify`; `POST /context`; `POST /answers/generate`; `POST /answers/validate`; `POST /answers/save`; and `POST /settings/delete-all-data` with an explicit confirmation body.
+Authentication: `POST /auth/register` returns `{"api_key": "af_..."}`. Send it as `Authorization: Bearer <api_key>` on every route except `/health`, `/auth/register` and the dashboard. All data is scoped to that key's user. `DELETE /auth/account` removes the account and its data.
+
+Key routes: `GET /health`, `GET|PUT /profile`, CRUD routes for `/education`, `/experience`, `/projects`, `/skills`, and `/answers`; `POST /cv/upload` and `GET /cv` for uploading and restoring the saved CV preview; `POST /fields/classify`; `POST /context`; `POST /answers/generate`; `POST /answers/validate`; `POST /answers/save`; and `POST /settings/delete-all-data` with an explicit confirmation body.
 
 ## Field payload
 
