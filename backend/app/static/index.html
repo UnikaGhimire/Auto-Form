@@ -23,7 +23,7 @@
       <a href="#answers">Previous answers</a>
       <a href="#settings">Settings</a>
     </nav>
-    <p class="local">Stored on this computer only</p>
+    <p class="local">Private to your AutoForm extension</p>
   </aside>
 
   <main>
@@ -157,14 +157,14 @@
       </form>
       <div id="cv-result" class="preview" hidden>
         <h3>Review extracted text <span id="cv-filename"></span></h3>
-        <p id="cv-context">Saved locally and available as context for reviewed answer generation. Profile fields are never changed automatically.</p>
+        <p id="cv-context">Saved to your profile and available as context for reviewed answer generation. Profile fields are never changed automatically.</p>
         <div id="cv-sections" class="cv-sections"></div>
         <details><summary>Full extracted text</summary><pre></pre></details>
       </div>
     </section>
 
     <section id="answers" class="card">
-      <div class="section-title"><div><h2>Previous approved answers</h2><p>Saved locally as reference for future, reviewed AI answers.</p></div></div>
+      <div class="section-title"><div><h2>Previous approved answers</h2><p>Saved as reference for future, reviewed AI answers.</p></div></div>
       <form class="record-form grid" data-resource="answers">
         <input type="hidden" name="id">
         <label class="wide">Question<textarea name="question" required></textarea></label>
@@ -174,20 +174,27 @@
       <div class="records" id="answers-records"></div>
     </section>
 
+    <p id="no-key" class="card" hidden><strong>Open this dashboard from the AutoForm extension.</strong> Click the AutoForm toolbar icon and choose <em>Edit profile</em>, so the dashboard knows which profile is yours.</p>
+
     <section id="settings" class="card danger">
       <div class="settings-panel">
         <p class="settings-kicker">Settings</p>
-        <h2>Delete local data</h2>
-        <p class="settings-copy">This permanently removes everything stored by Automatic Form Filler on this computer. You will need to re-enter your profile before scanning forms again.</p>
+        <h2>Delete my data</h2>
+        <p class="settings-copy">This permanently removes everything AutoForm has stored for your extension install. You will need to re-enter your profile before scanning forms again.</p>
         <ul class="settings-list">
           <li>Personal profile details</li>
           <li>Education, experience, skills, and projects</li>
-          <li>Uploaded CV files and extracted text</li>
+          <li>Extracted CV text</li>
           <li>Previously approved written answers</li>
         </ul>
         <div class="settings-actions">
-          <button id="delete-all" class="danger-button" type="button">Delete all local data</button>
+          <button id="delete-all" class="danger-button" type="button">Delete all my data</button>
           <p class="settings-note">This cannot be undone.</p>
+        </div>
+        <h2>Access key</h2>
+        <p class="settings-copy">Your profile is tied to this key, which the extension created automatically. Keep a copy if you want to reconnect after reinstalling the extension. Never share it, because anyone with this key can read your profile.</p>
+        <div class="settings-actions">
+          <button id="copy-key" class="secondary" type="button">Copy access key</button>
         </div>
       </div>
     </section>

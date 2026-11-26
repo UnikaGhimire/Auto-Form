@@ -55,13 +55,15 @@ function passesFilter(item) {
 async function init() {
   const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
   tabId = tab.id;
+  $('#status').textContent = 'Connecting… (the free server can take up to a minute to wake up)';
+  $('#status').hidden = false;
   const health = await ask({ type: 'health' });
   if (health?.status !== 'ok') {
-    $('#status').textContent = 'Backend offline. Start FastAPI on 127.0.0.1:8000.';
-    $('#status').hidden = false;
+    $('#status').textContent = 'Cannot reach the AutoForm server. Check your connection and try again.';
     $('#scan').hidden = false;
     return;
   }
+  $('#status').hidden = true;
   await scanForm(false);
 }
 
@@ -100,6 +102,11 @@ async function scanForm(showProgress = true) {
 }
 
 $('#scan').onclick = () => scanForm(true);
+$('#dashboard').onclick = async () => {
+  const result = await ask({ type: 'open-dashboard' });
+  if (result?.error) status(`Could not open the profile: ${result.error}`);
+  else window.close();
+};
 
 document.querySelectorAll('.filter').forEach(button => {
   button.onclick = () => {
@@ -188,7 +195,7 @@ function render() {
       const item = suggestions[node.dataset.on];
       if (node.checked && item.kind === 'open_ended' && item.value) {
         const saved = await ask({ type: 'save-answer', question: item.question, answer: item.value });
-        if (saved?.saved) status('Approved answer saved locally and will be reused for similar questions.');
+        if (saved?.saved) status('Approved answer saved and will be reused for similar questions.');
       }
     };
   });
