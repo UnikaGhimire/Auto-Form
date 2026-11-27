@@ -4,7 +4,17 @@ from io import BytesIO
 from unittest.mock import patch
 from docx import Document
 
-os.environ['DATABASE_URL'] = 'sqlite:///./test.db'
+# Set TEST_DATABASE_URL=postgresql://... to run the suite against Postgres (use a throwaway database).
+os.environ['DATABASE_URL'] = os.environ.get('TEST_DATABASE_URL', 'sqlite:///./test.db')
+os.environ['LLM_PROVIDER'] = 'ollama'
+os.environ['LLM_API_KEY'] = ''
+if os.path.exists('test.db'):
+    os.remove('test.db')
+if not os.environ['DATABASE_URL'].startswith('sqlite'):
+    from sqlalchemy import create_engine, text
+    _url = os.environ['DATABASE_URL'].replace('postgres://', 'postgresql+psycopg://', 1).replace('postgresql://', 'postgresql+psycopg://', 1)
+    with create_engine(_url).begin() as _conn:
+        _conn.execute(text('DROP SCHEMA public CASCADE; CREATE SCHEMA public'))
 from fastapi.testclient import TestClient
 
 from app.main import app
@@ -18,6 +28,18 @@ from app.services import (
 )
 
 client = TestClient(app)
+with client:
+    API_KEY = client.post('/auth/register').json()['api_key']
+    client.headers.update({'Authorization': f'Bearer {API_KEY}'})
+    USER_ID = client.get('/auth/me').json()['user_id']
+
+
+def new_client():
+    """A second, independent extension install."""
+    other = TestClient(app)
+    key = other.post('/auth/register').json()['api_key']
+    other.headers.update({'Authorization': f'Bearer {key}'})
+    return other
 
 
 def field(**overrides):
@@ -292,7 +314,9 @@ def test_context_combines_profile_experience_and_cv():
 
 def _session():
     from app.database import SessionLocal
-    return SessionLocal()
+    session = SessionLocal()
+    session.info['user_id'] = USER_ID
+    return session
 
 
 def test_approved_answers_are_reused_as_evidence():
@@ -360,3 +384,88 @@ def test_model_selection_prefers_the_configured_model_then_the_strongest():
 def test_field_text_prioritises_the_label_over_container_noise():
     noisy = field(label='Email', nearby_text='Company name Phone Address Salary expectations Submit form section 2 email policy')
     assert primary_text(noisy) == 'email'
+
+
+# --------------------------------------------------------------------------------------
+# Hosting: accounts, isolation, limits, hosted LLM
+# --------------------------------------------------------------------------------------
+
+def test_requests_without_a_key_are_rejected():
+    anonymous = TestClient(app)
+    assert anonymous.get('/profile').status_code == 401
+    assert anonymous.get('/profile', headers={'Authorization': 'Bearer af_not-a-real-key'}).status_code == 401
+    assert anonymous.post('/fields/classify', json={'fields': []}).status_code == 401
+    assert anonymous.get('/health').status_code == 200
+    assert anonymous.get('/').status_code == 200
+
+
+def test_users_cannot_see_or_change_each_others_data():
+    with client:
+        client.put('/profile', json={'full_name': 'Ada Lovelace', 'email': 'ada@example.test'})
+        client.post('/skills', json={'name': 'Python'})
+        edu_id = client.post('/education', json={'institution': 'North College'}).json()['id']
+        other = new_client()
+        assert other.get('/profile').json()['full_name'] == ''
+        assert other.get('/education').json() == []
+        assert other.get('/skills').json() == []
+        assert other.post('/skills', json={'name': 'Python'}).status_code == 200  # same name, different user
+        assert other.put(f'/education/{edu_id}', json={'institution': 'Hacked'}).status_code == 404
+        assert other.delete(f'/education/{edu_id}').status_code == 404
+        email = other.post('/fields/classify', json={'fields': [{'id': 'e', 'label': 'Email'}]}).json()['fields'][0]
+        assert email['value'] == ''
+        context = other.post('/context', json={'question': 'Tell us about your education'}).json()['context']
+        assert 'North College' not in context and 'Ada' not in context
+        assert other.post('/settings/delete-all-data', json={'confirm': True}).status_code == 200
+        assert client.get('/profile').json()['full_name'] == 'Ada Lovelace'
+        assert any(row['id'] == edu_id for row in client.get('/education').json())
+        assert other.delete('/auth/account').status_code == 200
+        assert other.get('/profile').status_code == 401
+
+
+def test_generation_is_rate_limited_per_user():
+    from app.auth import limiter
+    limiter.reset()
+    other = new_client()
+    other.put('/profile', json={'full_name': 'Grace Hopper', 'summary': 'Compiler engineer.'})
+
+    async def fake_generate(*args, **kwargs):
+        return 'I build compilers.'
+
+    with patch('app.main.generate_local', fake_generate), patch.object(settings, 'generate_limit_per_hour', 2):
+        codes = [other.post('/answers/generate', json={'question': 'Tell us about yourself'}).status_code for _ in range(3)]
+        assert codes == [200, 200, 429]
+        assert client.post('/answers/generate', json={'question': 'Tell us about yourself'}).status_code == 200
+    limiter.reset()
+
+
+def test_hosted_openai_compatible_provider():
+    captured = {}
+
+    class Response:
+        def raise_for_status(self): pass
+        def json(self): return {'choices': [{'message': {'content': '<think>plan</think>I built forecasting tools in Python at Acme Corp.'}}]}
+
+    class Client:
+        def __init__(self, timeout=None): pass
+        async def __aenter__(self): return self
+        async def __aexit__(self, *args): pass
+        async def post(self, url, json, headers=None):
+            captured.update(url=url, body=json, headers=headers)
+            return Response()
+
+    with patch.object(settings, 'llm_provider', 'openai'), patch.object(settings, 'llm_api_key', 'sk-test'), \
+         patch.object(settings, 'llm_base_url', 'https://api.example.test/v1/'), patch('app.services.httpx.AsyncClient', Client):
+        answer = asyncio.run(generate_local('What did you build at Acme Corp?', 'Experience: Acme Corp, Python forecasting tools', 'concise'))
+    assert captured['url'] == 'https://api.example.test/v1/chat/completions'
+    assert captured['headers']['Authorization'] == 'Bearer sk-test'
+    assert captured['body']['model'] == settings.llm_model
+    assert captured['body']['max_tokens'] == 140
+    assert answer.startswith('I built') and 'think' not in answer
+
+
+def test_postgres_urls_are_normalised():
+    from app.config import Settings
+    assert Settings(database_url='postgres://u:p@h/db').database_url == 'postgresql+psycopg://u:p@h/db'
+    assert Settings(database_url='postgresql://u:p@h/db?sslmode=require').database_url == 'postgresql+psycopg://u:p@h/db?sslmode=require'
+    assert Settings(llm_provider='auto', llm_api_key='x').provider == 'openai'
+    assert Settings(llm_provider='auto', llm_api_key='').provider == 'ollama'

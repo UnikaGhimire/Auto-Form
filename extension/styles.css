@@ -284,3 +284,8 @@ small { display: block; margin: 4px 0; }
   color: #312e81;
   box-shadow: none;
 }
+
+#dashboard {
+  width: 100%;
+  margin: 8px 0 4px;
+}
